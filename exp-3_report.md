@@ -25,10 +25,10 @@
 - 拼接使用的图像为 `ori_left` （左半部分）和 `ori_right_mirror` （右半部分**镜像**）。
 
 | **Origin** | **Origin_left** |
-|:----:| :----: |
-| ![no](photos/origin.jpg) |  ![no](photos/ori_left.jpg) |
+|:----:|:----:|
+| <img src="photos/origin.jpg" height="250"> | <img src="photos/ori_left.jpg" height="250"> |
 | **Origin_right** | **Origin_right_mirror** |
-| ![no](photos/ori_right.jpg) |  ![no](photos/ori_right_mirror.jpg) |
+| <img src="photos/ori_right.jpg" height="250"> | <img src="photos/ori_right_mirror.jpg" height="250"> |
 
 ##### 3、获取特征点
 - 首先对图像进行SIFT特征提取，主要通过调用`cv2.SIFT_create()` API 实现，返回关键点（keypoints）、描述符（descriptors）。
