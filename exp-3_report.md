@@ -33,45 +33,7 @@
 ##### 3、获取特征点
 - 首先对图像进行SIFT特征提取，主要通过调用`cv2.SIFT_create()` API 实现，返回关键点（keypoints）、描述符（descriptors）。
 - 这里我定义了一个`draw_pos()`函数，用于关键点的可视化。
-<div style="
-  position: relative;
-  background: #1e1e1e;
-  border-radius: 10px;
-  padding: 35px 20px 20px 20px;
-  color: #eee;
-  font-family: 'Menlo', monospace;
-  overflow-x: auto;
-">
-  <!-- 顶部条 -->
-  <div style="
-    position: absolute;
-    top: 10px;
-    left: 15px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    width: calc(100% - 30px);
-  ">
-    <div>
-      <span style='display:inline-block;width:12px;height:12px;background:#ff5f56;border-radius:50%;margin-right:6px;'></span>
-      <span style='display:inline-block;width:12px;height:12px;background:#ffbd2e;border-radius:50%;margin-right:6px;'></span>
-      <span style='display:inline-block;width:12px;height:12px;background:#27c93f;border-radius:50%;'></span>
-    </div>
-    <div style="
-      background:#2b2b2b;
-      color:#ddd;
-      font-size:12px;
-      padding:2px 10px;
-      border-radius:5px;
-      font-family:Arial, sans-serif;
-      letter-spacing:0.5px;
-    ">
-      Python
-    </div>
-  </div>
-
-  <pre style="margin:0; margin-top:10px;">
-<code class="language-python">
+```python
 def drawpos(img_left,img_right,kps_left,kps_rigt):
     hl, wl = img_left.shape[:2]
     hr, wr = img_right.shape[:2]
@@ -87,9 +49,7 @@ def drawpos(img_left,img_right,kps_left,kps_rigt):
         pos_r = (int(kp.pt[0]+wl),int(kp.pt[1]))
         cv2.circle(vis, pos_r, 3, (0, 255, 0), 1)
     return vis
-</code></pre>
-</div>
-
+```
 - 特征点可视化结果如下图所示：
 ![特征图像](/photos/my_result/keyposints.jpg)
 
@@ -97,45 +57,7 @@ def drawpos(img_left,img_right,kps_left,kps_rigt):
 - 这里我并未使用参考代码中 `FLANN` （近似最近邻库）方法，而是手动实现了`matchKeyPoint(kps_l, kps_r, features_l, features_r, ratio)`函数，实现思路就是：对每个描述子用两层循环计算欧氏距离，得到最近和次近，做 ratio 阈值测试，其实就是暴力查找。
 - 虽然这种Python实现的暴力查找方法效率必然逊色于 `FLANN`，但是更加精确，这一点会在后续对比实验中进一步呈现。
 
-<div style="
-  position: relative;
-  background: #1e1e1e;
-  border-radius: 10px;
-  padding: 35px 20px 20px 20px;
-  color: #eee;
-  font-family: 'Menlo', monospace;
-  overflow-x: auto;
-">
-  <!-- 顶部条 -->
-  <div style="
-    position: absolute;
-    top: 10px;
-    left: 15px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    width: calc(100% - 30px);
-  ">
-    <div>
-      <span style='display:inline-block;width:12px;height:12px;background:#ff5f56;border-radius:50%;margin-right:6px;'></span>
-      <span style='display:inline-block;width:12px;height:12px;background:#ffbd2e;border-radius:50%;margin-right:6px;'></span>
-      <span style='display:inline-block;width:12px;height:12px;background:#27c93f;border-radius:50%;'></span>
-    </div>
-    <div style="
-      background:#2b2b2b;
-      color:#ddd;
-      font-size:12px;
-      padding:2px 10px;
-      border-radius:5px;
-      font-family:Arial, sans-serif;
-      letter-spacing:0.5px;
-    ">
-      Python
-    </div>
-  </div>
-
-  <pre style="margin:0; margin-top:10px;">
-<code class="language-python">
+```python
 def matchKeyPoint(kps_l, kps_r, features_l, features_r, ratio):
     Match_idxAndDist = [] # 存储最近点位置、最近点距离、次近点位置、次近点距离
     for i in range(len(features_l)):
@@ -168,8 +90,7 @@ def matchKeyPoint(kps_l, kps_r, features_l, features_r, ratio):
         goodMatches_pos.append([psA, psB])
         
     return goodMatches_pos
-</code></pre>
-</div>
+```
 
 - 匹配点连线如下图所示，从图中不难看出，存在一些“假匹配点”：特征点虽然在局部描述子上相似，但实际上在空间上并不属于同一个几何变换关系。因此，需要进一步去除错误点对。
 
@@ -185,45 +106,7 @@ def matchKeyPoint(kps_l, kps_r, features_l, features_r, ratio):
 
 - 首先定义单应矩阵的计算函数 `solve_homography()` ，如下所示：
 
-<div style="
-  position: relative;
-  background: #1e1e1e;
-  border-radius: 10px;
-  padding: 35px 20px 20px 20px;
-  color: #eee;
-  font-family: 'Menlo', monospace;
-  overflow-x: auto;
-">
-  <!-- 顶部条 -->
-  <div style="
-    position: absolute;
-    top: 10px;
-    left: 15px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    width: calc(100% - 30px);
-  ">
-    <div>
-      <span style='display:inline-block;width:12px;height:12px;background:#ff5f56;border-radius:50%;margin-right:6px;'></span>
-      <span style='display:inline-block;width:12px;height:12px;background:#ffbd2e;border-radius:50%;margin-right:6px;'></span>
-      <span style='display:inline-block;width:12px;height:12px;background:#27c93f;border-radius:50%;'></span>
-    </div>
-    <div style="
-      background:#2b2b2b;
-      color:#ddd;
-      font-size:12px;
-      padding:2px 10px;
-      border-radius:5px;
-      font-family:Arial, sans-serif;
-      letter-spacing:0.5px;
-    ">
-      Python
-    </div>
-  </div>
-
-  <pre style="margin:0; margin-top:10px;">
-<code class="language-python">
+```python
 def solve_homography(P, m):
     try:
         A = []  
@@ -241,8 +124,7 @@ def solve_homography(P, m):
         print("Error on compute H")
 
     return H
-</code></pre>
-</div>
+```
 
 - 拟合单应矩阵
 基于 RANSAC 算法，定义了 `fitHomoMat(matches_pos,nIter, th)` 函数，其基本思路如下：
@@ -250,45 +132,7 @@ def solve_homography(P, m):
   2. 将初始矩阵 `𝐻` 于所有源点进行投影变换，计算投影位置与实际目标点间的欧氏距离。若该距离小于设定阈值 `th` ，则认为该点对为内点（`inlier`）。
   3. 迭代（`nIter`）次比较各模型内点数量，选取内点最多的模型作为最优单应矩阵。
 
-<div style="
-  position: relative;
-  background: #1e1e1e;
-  border-radius: 10px;
-  padding: 35px 20px 20px 20px;
-  color: #eee;
-  font-family: 'Menlo', monospace;
-  overflow-x: auto;
-">
-  <!-- 顶部条 -->
-  <div style="
-    position: absolute;
-    top: 10px;
-    left: 15px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    width: calc(100% - 30px);
-  ">
-    <div>
-      <span style='display:inline-block;width:12px;height:12px;background:#ff5f56;border-radius:50%;margin-right:6px;'></span>
-      <span style='display:inline-block;width:12px;height:12px;background:#ffbd2e;border-radius:50%;margin-right:6px;'></span>
-      <span style='display:inline-block;width:12px;height:12px;background:#27c93f;border-radius:50%;'></span>
-    </div>
-    <div style="
-      background:#2b2b2b;
-      color:#ddd;
-      font-size:12px;
-      padding:2px 10px;
-      border-radius:5px;
-      font-family:Arial, sans-serif;
-      letter-spacing:0.5px;
-    ">
-      Python
-    </div>
-  </div>
-
-  <pre style="margin:0; margin-top:10px;">
-<code class="language-python">
+```python
 def fitHomoMat(matches_pos, nIter=1000, th=5.0)
     # 匹配点分离
     dstPoints, srcPoints = [], []
@@ -328,8 +172,7 @@ def fitHomoMat(matches_pos, nIter=1000, th=5.0)
             save_Inlier_pos = pos_Inlier
 
     return Best_H, save_Inlier_pos
-</code></pre>
-</div>
+```
 
 - 可视化 内点（Inlier）匹配结果如下图所示。与 [初次匹配](/photos/Matches_pos.jpg) 相比， RANSAC 优化后显著提升了匹配对的准确性与鲁棒性，有效剔除了错误匹配点。
 
@@ -337,45 +180,7 @@ def fitHomoMat(matches_pos, nIter=1000, th=5.0)
 
 ##### 6、图像融合
 - 由于坐标变换等原因，导致拼接图像右侧或下方常常留有全黑区域，因此定义了 `removeBlackBorder(img)` 函数去除黑边（不过只是矩形剪切，不会将全部的黑边区域全部切掉）。主要通过像素扫描方式移除右侧与底部的纯黑像素区域，以减小图像尺寸、提高视觉紧凑度。
-<div style="
-  position: relative;
-  background: #1e1e1e;
-  border-radius: 10px;
-  padding: 35px 20px 20px 20px;
-  color: #eee;
-  font-family: 'Menlo', monospace;
-  overflow-x: auto;
-">
-  <!-- 顶部条 -->
-  <div style="
-    position: absolute;
-    top: 10px;
-    left: 15px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    width: calc(100% - 30px);
-  ">
-    <div>
-      <span style='display:inline-block;width:12px;height:12px;background:#ff5f56;border-radius:50%;margin-right:6px;'></span>
-      <span style='display:inline-block;width:12px;height:12px;background:#ffbd2e;border-radius:50%;margin-right:6px;'></span>
-      <span style='display:inline-block;width:12px;height:12px;background:#27c93f;border-radius:50%;'></span>
-    </div>
-    <div style="
-      background:#2b2b2b;
-      color:#ddd;
-      font-size:12px;
-      padding:2px 10px;
-      border-radius:5px;
-      font-family:Arial, sans-serif;
-      letter-spacing:0.5px;
-    ">
-      Python
-    </div>
-  </div>
-
-  <pre style="margin:0; margin-top:10px;">
-<code class="language-python">
+```python
 def removeBlackBorder(img):
 
     h, w = img.shape[:2]
@@ -401,53 +206,14 @@ def removeBlackBorder(img):
             reduced_h = reduced_h - 1
 
     return img[:reduced_h, :reduced_w]
-</code></pre>
-</div>
+```
 
 - 图像融合函数 `warp(img_left, img_right, H, blending_mode)` ，特别地，这里我设置了三种融合策略进行对比：
   - noBlending：直接将左图和变换后的右图叠加到拼接画布上，无任何权重混合；
   - linearBlending：对重叠区域按线性权重进行加权平均；
   - linearBlendingWithConstant：只对重叠区域的中心固定宽度部分进行线性加权，其余区域保持原像素
 - 首先通过 `H` 的逆变换矩阵将右图几何变换对齐到左图坐标系，随后根据设定的融合模式执行不同的拼接策略。实现代码如下（其中 `inearBlendingWithConstantWidth()` 和 `inearBlending()` 实现代码较长，不再进行展示，[详情](./code/img_stitching.ipynb)）。
-<div style="
-  position: relative;
-  background: #1e1e1e;
-  border-radius: 10px;
-  padding: 35px 20px 20px 20px;
-  color: #eee;
-  font-family: 'Menlo', monospace;
-  overflow-x: auto;
-">
-  <!-- 顶部条 -->
-  <div style="
-    position: absolute;
-    top: 10px;
-    left: 15px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    width: calc(100% - 30px);
-  ">
-    <div>
-      <span style='display:inline-block;width:12px;height:12px;background:#ff5f56;border-radius:50%;margin-right:6px;'></span>
-      <span style='display:inline-block;width:12px;height:12px;background:#ffbd2e;border-radius:50%;margin-right:6px;'></span>
-      <span style='display:inline-block;width:12px;height:12px;background:#27c93f;border-radius:50%;'></span>
-    </div>
-    <div style="
-      background:#2b2b2b;
-      color:#ddd;
-      font-size:12px;
-      padding:2px 10px;
-      border-radius:5px;
-      font-family:Arial, sans-serif;
-      letter-spacing:0.5px;
-    ">
-      Python
-    </div>
-  </div>
-
-  <pre style="margin:0; margin-top:10px;">
-<code class="language-python">
+```python
 def warp(img_left, img_right, HomoMat, blending_mode="linearBlending"):
 
     hl, wl = img_left.shape[:2]
@@ -476,9 +242,7 @@ def warp(img_left, img_right, HomoMat, blending_mode="linearBlending"):
 
     # 裁剪黑边
     return removeBlackBorder(stitch_img)
-
-</code></pre>
-</div>
+```
 
 - 三种融合策略对应效果如下图所示
 
@@ -521,45 +285,7 @@ def warp(img_left, img_right, HomoMat, blending_mode="linearBlending"):
 
 >“Compensate exposure”（曝光补偿）是指对图像进行调整以实现曝光一致性的过程。在拼接全景图像时，不同输入图像可能具有不同的曝光水平，这可能会导致最终拼接结果中出现不连贯或明显的亮度差异。为了解决这个问题，代码中的"Compensate exposure"部分对每个图像进行曝光补偿，以使其在全景图中的曝光水平更加一致。
 
-<div style="
-  position: relative;
-  background: #1e1e1e;
-  border-radius: 10px;
-  padding: 35px 20px 20px 20px;
-  color: #eee;
-  font-family: 'Menlo', monospace;
-  overflow-x: auto;
-">
-  <!-- 顶部条 -->
-  <div style="
-    position: absolute;
-    top: 10px;
-    left: 15px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    width: calc(100% - 30px);
-  ">
-    <div>
-      <span style='display:inline-block;width:12px;height:12px;background:#ff5f56;border-radius:50%;margin-right:6px;'></span>
-      <span style='display:inline-block;width:12px;height:12px;background:#ffbd2e;border-radius:50%;margin-right:6px;'></span>
-      <span style='display:inline-block;width:12px;height:12px;background:#27c93f;border-radius:50%;'></span>
-    </div>
-    <div style="
-      background:#2b2b2b;
-      color:#ddd;
-      font-size:12px;
-      padding:2px 10px;
-      border-radius:5px;
-      font-family:Arial, sans-serif;
-      letter-spacing:0.5px;
-    ">
-      Cpp
-    </div>
-  </div>
-
-  <pre style="margin:0; margin-top:10px;">
-<code class="language-python">
+```cpp
 // Seam finding
 seam_finder_->find(img_warped, corners[img_idx], mask_warped);
 LOGLN(" seam finding: " << ((getTickCount() - pt) / getTickFrequency()) << " sec");
@@ -570,8 +296,9 @@ exposure_comp_->apply((int)img_idx, corners[img_idx], img_warped, mask_warped);
 LOGLN(" compensate exposure: " << ((getTickCount() - pt) / getTickFrequency()) << " sec");
 </code></pre>
 </div>
+```
 
-这其实解释了为什么手动实现采用的融合方式 `linear Blending` 以及 `linear Blending With Constant Width` 均不能很好的处理鬼影问题：因为这两种方式是**加权平均**，重叠区域的两张照片都会起作用；但是 OpenCV 通过**缝隙选择**一张图片的像素，同时**曝光补偿**平滑亮度，从而减少鬼影。
+这其实解释了为什么手动实现采用的融合方式 `linear Blending` 以及 `linear Blending With Constant Width` 均不能很好的处理“鬼影”问题：因为这两种方式是**加权平均**，重叠区域的两张照片都会起作用；但是 OpenCV 通过**缝隙选择**一张图片的像素，同时**曝光补偿**平滑亮度，从而减少鬼影。
 
 3、其它细节这里不再详细说明，在实验内容部分已有阐述。
 
