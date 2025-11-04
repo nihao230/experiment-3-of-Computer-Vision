@@ -96,13 +96,14 @@ def matchKeyPoint(kps_l, kps_r, features_l, features_r, ratio):
 
 ![初次匹配](/photos/my_result/Matches_pos.jpg)
 
-##### 5、最优单应矩阵计算
-- RANSAC算法
+##### 5、RANSAC算法
 > - RANSAC算法的基本假设是样本中包含正确数据(inliers，可以被模型描述的数据)，也包含异常数据(outliers，偏离正常范围很远、无法适应数学模型的数据)，即数据集中含有噪声。
 > - 由直线的知识点可知，两点可以确定一条直线，所以可以随机的在数据点集中选择两点，从而确定一条直线。然后通过设置给定的阈值，计算在直线两旁的符合阈值范围的点，统计点的个数inliers。inliers最多的点集所在的直线，就是我们要选取的最佳直线。
 ![参考](/photos/reference.png)
 
 参考：[图像拼接-- RANSAC 算法解析](https://cloud.tencent.com/developer/article/2096397)
+
+##### 6、拟合单应矩阵
 
 - 首先定义单应矩阵的计算函数 `solve_homography()` ，如下所示：
 
@@ -126,8 +127,7 @@ def solve_homography(P, m):
     return H
 ```
 
-- 拟合单应矩阵
-基于 RANSAC 算法，定义了 `fitHomoMat(matches_pos,nIter, th)` 函数，其基本思路如下：
+- 基于 RANSAC 算法，定义了 `fitHomoMat(matches_pos,nIter, th)` 函数，其基本思路如下：
   1. 首先将输入的匹配点对划分为源点集与目标点集，抽样计算初始单应矩阵  `𝐻` 。
   2. 将初始矩阵 `𝐻` 于所有源点进行投影变换，计算投影位置与实际目标点间的欧氏距离。若该距离小于设定阈值 `th` ，则认为该点对为内点（`inlier`）。
   3. 迭代（`nIter`）次比较各模型内点数量，选取内点最多的模型作为最优单应矩阵。
@@ -178,7 +178,7 @@ def fitHomoMat(matches_pos, nIter=1000, th=5.0)
 
 ![内点匹配绘制](/photos/my_result/Matches_pos2.jpg)
 
-##### 6、图像融合
+##### 7、图像融合
 - 由于坐标变换等原因，导致拼接图像右侧或下方常常留有全黑区域，因此定义了 `removeBlackBorder(img)` 函数去除黑边（不过只是矩形剪切，不会将全部的黑边区域全部切掉）。主要通过像素扫描方式移除右侧与底部的纯黑像素区域，以减小图像尺寸、提高视觉紧凑度。
 ```python
 def removeBlackBorder(img):
@@ -261,7 +261,7 @@ def warp(img_left, img_right, HomoMat, blending_mode="linearBlending"):
   - 2️⃣ linearBlending：重叠区域实现平滑过渡，视觉效果自然，可有效减少拼接边界的明显痕迹；但是可能存在不合理拉伸，图片形状“畸形”。
   - 3️⃣ linearBlendingWithConstant：兼顾边缘细节保持和中心过渡平滑；对于重叠区域宽度较大时，能够避免整条过渡区域被拉伸导致模糊；
 
-##### 6、对比实验
+##### 8、对比实验
 - 情景 1 ：纯静态（图片裁剪）
 - 情景 2 ：微动态（重叠区域存在动态物体的移动）
 - 对比手动实现、实验参考代码（将其作为 baseline ）、OpenCV `stitcher = cv2.Stitcher_create().stitch()` API 三种方式在静态拼接、微动态拼接上的差异，结果如下：
@@ -278,6 +278,7 @@ def warp(img_left, img_right, HomoMat, blending_mode="linearBlending"):
 
 #### 三、实验总结与探索
 1、本实验手动实现了图像拼接过程，并对不同的融合策略进行了横向对比；比较了手动实现方式、实验参考代码（作为baseline）、OpenCV API 这三种方式在不同场景下的拼接效果。
+
 2、探索
 为了了解 OpenCV 内部函数是如何解决“鬼影”问题的，我查看了 OpenCV 的官方文档。
 
