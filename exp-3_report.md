@@ -306,7 +306,9 @@ LOGLN(" compensate exposure: " << ((getTickCount() - pt) / getTickFrequency()) <
 
 参考：
 [1] [图像拼接-- RANSAC 算法解析](https://cloud.tencent.com/developer/article/2096397)
+
 [2] [图像拼接与图像融合技术](https://www.cnblogs.com/skyfsm/p/7411961.html)
+
 [3] [OpenCV : Group Stitching](https://docs.opencv.org/4.x/d1/d46/group__stitching.html)
 
 
